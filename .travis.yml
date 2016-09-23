@@ -1,8 +1,10 @@
 language: python
 before_script:
-  - pip install tox
+  - pip install python-coveralls tox
 
 script: tox
+after_success:
+  - coveralls
 
 matrix:
   include:

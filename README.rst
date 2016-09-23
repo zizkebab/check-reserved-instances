@@ -1,6 +1,15 @@
 check-reserved-instances
 --------------------------
 
+.. image:: https://img.shields.io/travis/TerbiumLabs/check-reserved-instances.svg
+   :target: https://travis-ci.org/TerbiumLabs/check-reserved-instances
+
+.. image:: https://img.shields.io/coveralls/TerbiumLabs/check-reserved-instances.svg
+   :target: https://coveralls.io/r/TerbiumLabs/check-reserved-instances
+
+.. image:: https://img.shields.io/pypi/pyversions/check-reserved-instances.svg
+   :target: https://pypi.python.org/pypi/check-reserved-instances/
+
 Check Reserved Instances - Compare instance reservations with running
 instances
 
