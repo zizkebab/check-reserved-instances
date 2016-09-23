@@ -1,0 +1,14 @@
+*.pyc
+venv*
+.tox
+.python-version
+config.ini
+.eggs
+*egg-info
+dist*
+build*
+htmlcov
+test_results.xml
+.cache
+.coverage
+*.egg
