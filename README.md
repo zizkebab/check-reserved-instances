@@ -29,13 +29,13 @@ $ cp config.ini.sample config.ini
 
 ### Configuring AWS Accounts/Credentials
 
-Multiple AWS accounts are supported! Specify one or many sections with name `[AWS <name here>]`. These are the lists of AWS credentials that will be used to query for instances. Replace `<name here>` with a nickname that want to provide in the report.
+Multiple AWS accounts/regions are supported! Specify one or many sections with name `[AWS <name here>]`. These are the lists of AWS credentials that will be used to query for instances. Replace `<name here>` with a nickname that want to provide in the report.
 
 The following configuration options are supported:
 
 - **aws_access_key_id** (Required str): The AWS IAM access key for a specific user.
 - **aws_secret_access_key** (Required str): The AWS IAM secret key for a specific user.
-- **region** (Optional str): The AWS region to query for the account. Defaults to us-east-1.
+- **region** (Optional str): The AWS region to query for the account. Defaults to us-east-1. If multiple regions are desired, another `[AWS <name here]` section is required.
 - **rds** (Optional bool): Boolean for whether or not to check RDS reserved instances.
 - **elasticache** (Optional bool): Whether or not to check ElastiCache reserved instances.
 
@@ -86,13 +86,13 @@ UNUSED RESERVATION! (1) m1.small    us-east-1b    Expires in [201] days.
 UNUSED RESERVATION! (1) m2.2xlarge  us-east-1a    Expires in [60] days.
 
 
-NOT RESERVED!  (1) t1.micro    us-east-1c
+NOT RESERVED!  (1) t1.micro    us-east-1c    i-sxcs34na
 
 NOT RESERVED!  (2) m1.small    us-east-1d    i-dfgeqa53, i-456sdf4g
 
 NOT RESERVED!  (3) m1.medium   us-east-1d    test_instance1, i-sdf3f4d6, test_instance2
 
-NOT RESERVED!  (1) m2.2xlarge  us-east-1b
+NOT RESERVED!  (1) m2.2xlarge  us-east-1b    i-21asdf4a
 
 
 (23) running on-demand EC2 instances
@@ -107,10 +107,12 @@ In this example, you can easily see that an m2.2xlarge was spun up in the wrong 
 * (1) m1.small (not 2, since you'll likely want to move your us-east-1b small to us-east-1d)
 * (3) m1.medium
 
+Additionally, instance IDs or Name tags are provided for unreserved instances, and time to expiration for unused reservations are reported.
 
-## Required Permissions
 
-The following example policy is the minimum set of permissions needed to run the reporter:
+## Required IAM Permissions
+
+The following example IAM policy is the minimum set of permissions needed to run the reporter:
 
 ```
 {
