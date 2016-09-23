@@ -79,7 +79,7 @@ def parse_config(filename):
     """
     config_parser = ConfigParser()
     config = {}
-    config_parser.read(filename)
+    config_parser.read_file(filename)
 
     if config_parser.has_section(EMAIL_SECTION_NAME):
         config['Email'] = parse_email_config(config_parser)

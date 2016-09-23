@@ -3,7 +3,7 @@ check-reserved-instances
 
 Check Reserved Instances - Compare instance reservations with running instances
 
-Inspired by [epheph/ec2-check-reserved-instances](https://github.com/epheph/ec2-check-reserved-instances)
+Inspired by [epheph/ec2-check-reserved-instances](https://github.com/epheph/ec2-check-reserved-instances), and [pull request #5 by DavidGoodwin](https://github.com/epheph/ec2-check-reserved-instances/pull/5)
 
 Amazon's reserved instances are a great way to save money when using EC2, RDS, ElastiCache, etc. An instance reservation is specified by an availability zone, instance type, and quantity. Correlating the reservations you currently have active with your running instances is a manual, time-consuming, and error prone process.
 
@@ -29,7 +29,7 @@ $ cp config.ini.sample config.ini
 
 ### Configuring AWS Accounts/Credentials
 
-Multiple AWS accounts are supported! Specify one or many sections with name `[AWS <name here>]`. These are the lists of AWS credentials that will used to query for instances. Replace `<name here>` with a nickname that want to provide in the report.
+Multiple AWS accounts are supported! Specify one or many sections with name `[AWS <name here>]`. These are the lists of AWS credentials that will be used to query for instances. Replace `<name here>` with a nickname that want to provide in the report.
 
 The following configuration options are supported:
 
@@ -81,16 +81,16 @@ AWS account1 Reserved Instances Report
 Below is the report on EC2 reserved instances:
 
 
-UNUSED RESERVATION! (1) m1.small    us-east-1b
+UNUSED RESERVATION! (1) m1.small    us-east-1b    Expires in [201] days.
 
-UNUSED RESERVATION! (1) m2.2xlarge  us-east-1a
+UNUSED RESERVATION! (1) m2.2xlarge  us-east-1a    Expires in [60] days.
 
 
 NOT RESERVED!  (1) t1.micro    us-east-1c
 
-NOT RESERVED!  (2) m1.small    us-east-1d
+NOT RESERVED!  (2) m1.small    us-east-1d    i-dfgeqa53, i-456sdf4g
 
-NOT RESERVED!  (3) m1.medium   us-east-1d
+NOT RESERVED!  (3) m1.medium   us-east-1d    test_instance1, i-sdf3f4d6, test_instance2
 
 NOT RESERVED!  (1) m2.2xlarge  us-east-1b
 
@@ -102,7 +102,7 @@ NOT RESERVED!  (1) m2.2xlarge  us-east-1b
 Not sending email for this report
 ```
 
-In this example, you can easily see that an m2.2xlarge was spun up in the wrong AZ (us-east-1b vs. us-east-1a), as well as an m1.small. The "Instance not reserved" section shows that you could benefit from reserving:
+In this example, you can easily see that an m2.2xlarge was spun up in the wrong AZ (us-east-1b vs. us-east-1a), as well as an m1.small. The "NOT RESERVED!" section shows that you could benefit from reserving:
 * (1) t1.micro
 * (1) m1.small (not 2, since you'll likely want to move your us-east-1b small to us-east-1d)
 * (3) m1.medium
