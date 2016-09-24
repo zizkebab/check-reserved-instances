@@ -50,7 +50,6 @@ def report_results(config, results):
         config (dict): The application configuration.
         results (dict): The results to report.
     """
-    print(TEMPLATE_DIR)
     report_text = jinja2.Template(text_template).render(
         results=results, instance_ids=instance_ids,
         reserve_expiry=reserve_expiry)
