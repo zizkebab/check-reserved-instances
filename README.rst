@@ -193,8 +193,7 @@ TODO
    -  time since launch with each instance in the NOT RESERVED
    -  cost-savings of each UNUSED RESERVATION instance type
 
--  Move templates to package data and install to operating system folder
-   (ex. /etc/check-reserved-instances) for easy editing
+-  Install templates to operating system folder (ex. /etc/check-reserved-instances) for easy editing
 
 Contributing
 ------------

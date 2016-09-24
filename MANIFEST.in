@@ -1,0 +1,2 @@
+include LICENSE
+include src/check_reserved_instances/templates/*

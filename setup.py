@@ -44,6 +44,11 @@ def setup():
             'console_scripts': ['check-reserved-instances = '
                                 'check_reserved_instances:cli']
         },
+        package_data={
+            '': ['LICENSE'],
+            'check_reserved_instances':
+                ['check_reserved_instances/templates/*.html'],
+        },
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',

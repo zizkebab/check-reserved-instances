@@ -4,14 +4,14 @@ from __future__ import print_function
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import os
 import smtplib
-
 import jinja2
+import pkg_resources
 
 from check_reserved_instances.calculate import instance_ids, reserve_expiry
 
-CWD = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = pkg_resources.resource_filename(
+    'check_reserved_instances', 'templates')
 
 text_template = """
 {% for account_name, account_results in results.items() %}
@@ -50,6 +50,7 @@ def report_results(config, results):
         config (dict): The application configuration.
         results (dict): The results to report.
     """
+    print(TEMPLATE_DIR)
     report_text = jinja2.Template(text_template).render(
         results=results, instance_ids=instance_ids,
         reserve_expiry=reserve_expiry)
@@ -58,7 +59,7 @@ def report_results(config, results):
 
     if config.get('Email'):
         report_html = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(CWD),
+            loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
             trim_blocks=True
         ).get_template('html_template.html').render(
             results=results, instance_ids=instance_ids,
