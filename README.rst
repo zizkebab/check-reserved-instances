@@ -53,7 +53,7 @@ Configuring AWS Accounts/Credentials
 Multiple AWS accounts/regions are supported! Specify one or many
 sections with name ``[AWS <name here>]``. These are the lists of AWS
 credentials that will be used to query for instances. Replace
-``<name here>`` with a nickname that want to provide in the report.
+``<name here>`` with a nickname will be provided in the report.
 
 The following configuration options are supported:
 
@@ -63,7 +63,7 @@ The following configuration options are supported:
    for a specific user.
 -  **region** (Optional str): The AWS region to query for the account.
    Defaults to us-east-1. If multiple regions are desired, another
-   ``[AWS <name here]`` section is required.
+   ``[AWS <name here>]`` section is required.
 -  **rds** (Optional bool): Boolean for whether or not to check RDS
    reserved instances.
 -  **elasticache** (Optional bool): Whether or not to check ElastiCache
