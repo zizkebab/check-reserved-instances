@@ -41,8 +41,7 @@ Configuration
 -------------
 
 A sample configuration file is provided for easy use. By default, the
-script loads the configuration from config.ini alongside the
-check-reserved-instances executable.
+script loads the configuration from config.ini in the current directory.
 
 ::
 
