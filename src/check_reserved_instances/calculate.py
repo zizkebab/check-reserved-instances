@@ -65,7 +65,7 @@ def calculate_ec2_ris(account):
                     found_tag = False
                     if 'Tags' in instance:
                         for tag in instance['Tags']:
-                            if 'Name' in tag['Key'] and len(tag['Value']) > 0:
+                            if tag['Key'] == 'Name' and len(tag['Value']) > 0:
                                 instance_ids[(instance_type, az)].append(
                                     tag['Value'])
                                 found_tag = True
@@ -253,9 +253,9 @@ def report_diffs(running_instances, reserved_instances, service):
             # put into another dict for these RIs and break
             regional_benefit_ris[placement_key[0]] = reserved_instances[
                 placement_key]
-            break
-        instance_diff[placement_key] = reserved_instances[
-            placement_key] - running_instances.get(placement_key, 0)
+        else:
+            instance_diff[placement_key] = reserved_instances[
+                placement_key] - running_instances.get(placement_key, 0)
 
     # add unreserved instances to instance_diff
     for placement_key in running_instances:
@@ -269,15 +269,17 @@ def report_diffs(running_instances, reserved_instances, service):
         for placement_key in instance_diff:
             # find unreserved instances with the same type as the regional
             # benefit RI
-            if placement_key[0] == ri and instance_diff[placement_key] < 0:
+            if (placement_key[0] == ri and placement_key[1] != 'All' and
+                    instance_diff[placement_key] < 0):
                 # loop while incrementing unreserved instances (less than 0)
                 # and decrementing count of regional benefit RI's
                 while True:
-                    instance_diff[placement_key] += 1
-                    regional_benefit_ris[ri] -= 1
                     if (instance_diff[placement_key] == 0 or
                             regional_benefit_ris[ri] == 0):
                         break
+                    instance_diff[placement_key] += 1
+                    regional_benefit_ris[ri] -= 1
+
         instance_diff[(ri, 'All')] = regional_benefit_ris[ri]
 
     unused_reservations = dict((key, value) for key, value in
