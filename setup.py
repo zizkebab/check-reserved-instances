@@ -5,7 +5,7 @@ import setuptools
 
 def setup():
     """Setup function for PyPi."""
-    with io.open('README.rst') as fp:
+    with io.open('README.rst', 'r', encoding='utf-8') as fp:
         readme = fp.read()
     setuptools.setup(
         name='check-reserved-instances',
@@ -27,13 +27,11 @@ def setup():
         include_package_data=True,
         zip_safe=False,
         install_requires=[
-            'boto',
             'boto3',
             'click',
             'configparser',
             'Jinja2',
-            'MarkupSafe',
-            'python-dateutil'
+            'MarkupSafe'
         ],
         tests_require=[
             'mock',
