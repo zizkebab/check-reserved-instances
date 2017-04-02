@@ -57,22 +57,29 @@ def calculate_ec2_ris(account):
                 if 'SpotInstanceRequestId' not in instance:
                     az = instance['Placement']['AvailabilityZone']
                     instance_type = instance['InstanceType']
-                    ec2_running_instances[(
-                        instance_type, az)] = ec2_running_instances.get(
-                        (instance_type, az), 0) + 1
-
-                    # Either record the ec2 instance name tag, or the ID
-                    found_tag = False
+                    found_skip_tag = False
                     if 'Tags' in instance:
                         for tag in instance['Tags']:
-                            if tag['Key'] == 'Name' and len(tag['Value']) > 0:
-                                instance_ids[(instance_type, az)].append(
-                                    tag['Value'])
-                                found_tag = True
+                            if tag['Key'] == 'NoReservation' and len(tag['Value']) > 0 and tag['Value'].lower() == 'true':
+                                found_skip_tag = True
 
-                    if not found_tag:
-                        instance_ids[(instance_type, az)].append(
-                            instance['InstanceId'])
+                    if not found_skip_tag:
+                        ec2_running_instances[(
+                            instance_type, az)] = ec2_running_instances.get(
+                            (instance_type, az), 0) + 1
+
+                        # Either record the ec2 instance name tag, or the ID
+                        found_tag = False
+                        if 'Tags' in instance:
+                            for tag in instance['Tags']:
+                                if tag['Key'] == 'Name' and len(tag['Value']) > 0:
+                                    instance_ids[(instance_type, az)].append(
+                                        tag['Value'])
+                                    found_tag = True
+
+                        if not found_tag:
+                            instance_ids[(instance_type, az)].append(
+                                instance['InstanceId'])
 
     # Loop through active EC2 RIs and record their AZ and type.
     ec2_reserved_instances = {}
