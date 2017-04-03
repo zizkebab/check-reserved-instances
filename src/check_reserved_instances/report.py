@@ -18,31 +18,33 @@ TEMPLATE_DIR = pkg_resources.resource_filename(
 
 text_template = """
 {% for account_name, account_results in results.items() %}
-{{ account_name }} Reserved Instances Report
-###############################################
-    {% for result in account_results %}
-      {% for service, results_list in result.items() %}
+
+##########################################################
+#### {{ account_name.rjust(20) }} Reserved Instances Report  #####
+##########################################################
+    {%- for result in account_results -%}
+      {%- for service, results_list in result.items() %}
+-------
 Below is the report on {{ service }} reserved instances:
-        {% if results_list[0] %}
-          {% for type, count in results_list[0].items() %}
-UNUSED RESERVATION!\t({{ count }})\t{{ type[0] }}\t{{ type[1] }}{% if reserve_expiry %}\tExpires in {{ reserve_expiry[type]|string }} days.{% endif %}
-          {% endfor %}
-        {% else %}
+        {%- if results_list[0] -%}
+          {%- for type, count in results_list[0].items() %}
+UNUSED RESERVATION!\t({{ count }})\t{{ type[0] }}\t{{ type[1] }}{%- if reserve_expiry %}\tExpires in {{ reserve_expiry[type]|string }} days.{%- endif %}
+          {%- endfor %}
+        {%- else %}
 You have no unused {{ service }} reservations.
-        {% endif %}
-        {% if results_list[1] %}
-          {% for type, count in results_list[1].items() %}
+        {%- endif %}
+        {%- if results_list[1] %}
+          {%- for type, count in results_list[1].items() %}
 NOT RESERVED!\t({{ count }})\t{{ type[0] }}\t{{ type[1] }}{% if instance_ids %}\t{{ ", ".join(instance_ids[type]) }}{% endif %}
-          {% endfor %}
-        {% else %}
+          {%- endfor %}
+        {%- else %}
 You have no unreserved {{ service }} instances.
-        {% endif %}
+        {%- endif %}
 ({{ results_list[2] }}) running on-demand {{ service }} instances
 ({{ results_list[3] }}) {{ service }} reservations
-      {% endfor %}
-    {% endfor %}
-###############################################
-{% endfor %}
+      {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
 """  # noqa
 
 
