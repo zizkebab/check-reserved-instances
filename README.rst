@@ -186,6 +186,13 @@ needed to run the reporter:
         ]
     }
 
+NonReservation Tag
+----
+
+To skip checking for some ec2-instance, you need to add tag:
+NoReservation = True
+
+
 TODO
 ----
 
