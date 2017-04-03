@@ -57,29 +57,27 @@ def calculate_ec2_ris(account):
                 if 'SpotInstanceRequestId' not in instance:
                     az = instance['Placement']['AvailabilityZone']
                     instance_type = instance['InstanceType']
+                    # Check for 'skip reservation' tag and name tag
                     found_skip_tag = False
+                    instance_name = None
                     if 'Tags' in instance:
                         for tag in instance['Tags']:
-                            if tag['Key'] == 'NoReservation' and len(tag['Value']) > 0 and tag['Value'].lower() == 'true':
+                            if tag['Key'] == 'NoReservation' and len(
+                                tag['Value']) > 0 and tag[
+                                    'Value'].lower() == 'true':
                                 found_skip_tag = True
+                            if tag['Key'] == 'Name' and len(tag['Value']) > 0:
+                                instance_name = tag['Value']
 
+                    # If skip tag is not found, increment running instances
+                    # count and add instance name/ID
                     if not found_skip_tag:
                         ec2_running_instances[(
                             instance_type, az)] = ec2_running_instances.get(
                             (instance_type, az), 0) + 1
-
-                        # Either record the ec2 instance name tag, or the ID
-                        found_tag = False
-                        if 'Tags' in instance:
-                            for tag in instance['Tags']:
-                                if tag['Key'] == 'Name' and len(tag['Value']) > 0:
-                                    instance_ids[(instance_type, az)].append(
-                                        tag['Value'])
-                                    found_tag = True
-
-                        if not found_tag:
-                            instance_ids[(instance_type, az)].append(
-                                instance['InstanceId'])
+                        instance_ids[(instance_type, az)].append(
+                            instance['InstanceId'] if not instance_name
+                            else instance_name)
 
     # Loop through active EC2 RIs and record their AZ and type.
     ec2_reserved_instances = {}
@@ -137,7 +135,6 @@ def calculate_elc_ris(account):
                 elc_running_instances[(
                     instance_type, engine)] = elc_running_instances.get(
                         (instance_type, engine), 0) + 1
-
                 instance_ids[(instance_type, engine)].append(
                     instance['CacheClusterId'])
 
@@ -291,7 +288,6 @@ def report_diffs(running_instances, reserved_instances, service):
 
     unused_reservations = dict((key, value) for key, value in
                                instance_diff.items() if value > 0)
-
     unreserved_instances = dict((key, -value) for key, value in
                                 instance_diff.items() if value < 0)
 

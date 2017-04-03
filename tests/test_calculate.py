@@ -186,6 +186,26 @@ def get_ec2_instances():
                     }
                 ]
             },
+            {
+                u'Groups': [],
+                u'Instances': [
+                    {
+                        'Placement': {
+                            'AvailabilityZone': 'us-east-1c',
+                            'GroupName': '',
+                            'Tenancy': 'default'
+                        },
+                        'InstanceType': 't1.micro',
+                        'InstanceId': 'i-odfg35vs',
+                        'Tags': [
+                            {
+                                'Key': 'NoReservation',
+                                'Value': 'True'
+                            }
+                        ]
+                    }
+                ]
+            },
         ]
     }
 

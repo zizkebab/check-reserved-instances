@@ -159,6 +159,19 @@ the wrong AZ (us-east-1b vs. us-east-1a). A c4.large regional benefit reserved i
 Additionally, instance IDs or Name tags are provided for unreserved
 instances, and time to expiration for unused reservations are reported.
 
+Ignoring Reservations for Running Instances
+-------------------------------------------
+
+If you wish to ignore certain running instances when performing the calculation,
+you may tag these instances as follows:
+
+::
+
+  Key: NoReservation
+  Value: True
+
+
+NOTE: This feature is currently only supported for EC2 instances.
 
 Required IAM Permissions
 ------------------------
@@ -186,12 +199,6 @@ needed to run the reporter:
         ]
     }
 
-NonReservation Tag
-----
-
-To skip checking for some ec2-instance, you need to add tag:
-NoReservation = True
-
 
 TODO
 ----
@@ -203,6 +210,8 @@ TODO
    -  cost-savings of each UNUSED RESERVATION instance type
 
 -  Install templates to operating system folder (ex. /etc/check-reserved-instances) for easy editing
+-  Support 'NoReservation' tag for ElastiCache/RDS instances
+-  Add support for Redshift reserved nodes
 
 Contributing
 ------------
