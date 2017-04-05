@@ -107,7 +107,7 @@ Usage
 
 The following optional parameter is supported:
 
--  -c, –config : Specify a custom path to the configuration file.
+- **-–config** : Specify a custom path to the configuration file.
 
 Ideally, this script should be ran in a cronjob:
 
