@@ -126,6 +126,7 @@ def get_ec2_instances():
                             'Tenancy': 'default'
                         },
                         'InstanceType': 'c3.large',
+                        'VpcId': 'vpc-23hund21',
                         'InstanceId': 'i-lksjdfi2',
                         'Tags': [
                             {
@@ -145,6 +146,7 @@ def get_ec2_instances():
                             'GroupName': '',
                             'Tenancy': 'default'
                         },
+                        'VpcId': 'vpc-23hund21',
                         'InstanceType': 'm4.large',
                         'InstanceId': 'i-sdf3f4d6'
                     }
@@ -179,6 +181,7 @@ def get_ec2_instances():
                             'GroupName': '',
                             'Tenancy': 'default'
                         },
+                        'VpcId': 'vpc-23hund21',
                         'InstanceType': 't2.medium',
                         'InstanceId': 'i-sdfjj239',
                         'SpotInstanceRequestId':
@@ -219,6 +222,7 @@ def get_ec2_reserved_instances():
                 'AvailabilityZone': 'us-east-1b',
                 'InstanceType': 'c4.large',
                 'InstanceCount': 1,
+                'ProductDescription': 'Linux/UNIX (Amazon VPC)',
                 'End': datetime.datetime.utcnow() + datetime.timedelta(
                     days=365),
             },
@@ -227,6 +231,7 @@ def get_ec2_reserved_instances():
                 'AvailabilityZone': 'us-east-1c',
                 'InstanceType': 'm4.large',
                 'InstanceCount': 1,
+                'ProductDescription': 'Linux/UNIX (Amazon VPC)',
                 'End': datetime.datetime.utcnow() + datetime.timedelta(
                     days=365),
             },
@@ -235,6 +240,7 @@ def get_ec2_reserved_instances():
                 'AvailabilityZone': 'us-east-1b',
                 'InstanceType': 'm4.large',
                 'InstanceCount': 1,
+                'ProductDescription': 'Linux/UNIX (Amazon VPC)',
                 'End': datetime.datetime.utcnow() + datetime.timedelta(
                     days=365),
             },
@@ -242,6 +248,15 @@ def get_ec2_reserved_instances():
                 'Scope': 'Region',
                 'InstanceType': 'c3.large',
                 'InstanceCount': 3,
+                'ProductDescription': 'Linux/UNIX',
+                'End': datetime.datetime.utcnow() + datetime.timedelta(
+                    days=365),
+            },
+            {
+                'Scope': 'Region',
+                'InstanceType': 'm3.medium',
+                'InstanceCount': 1,
+                'ProductDescription': 'Linux/UNIX',
                 'End': datetime.datetime.utcnow() + datetime.timedelta(
                     days=365),
             }

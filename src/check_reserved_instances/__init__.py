@@ -52,17 +52,12 @@ def cli(config):
         config (str): The path to the configuration file.
     """
     current_config = parse_config(config)
-
     results = {}
-
     aws_accounts = current_config['Accounts']
 
     for aws_account in aws_accounts:
         name = aws_account['name']
-        results[name] = []
-        ec2 = calculate_ec2_ris(account=aws_account)
-        results[name].append(ec2[0])
-        results[name].append(ec2[1])
+        results[name] = calculate_ec2_ris(account=aws_account)
 
         if aws_account['rds'] is True:
             results[name].append(calculate_rds_ris(account=aws_account))

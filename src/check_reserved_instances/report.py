@@ -17,7 +17,7 @@ TEMPLATE_DIR = pkg_resources.resource_filename(
     'check_reserved_instances', 'templates')
 
 text_template = """
-{% for account_name, account_results in results.items() %}
+{%- for account_name, account_results in results.items() -%}
 
 ##########################################################
 #### {{ account_name.rjust(20) }} Reserved Instances Report  #####

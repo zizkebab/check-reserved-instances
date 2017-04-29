@@ -73,20 +73,20 @@ def calculate_ec2_ris(account):
                     # If skip tag is not found, increment running instances
                     # count and add instance name/ID
                     if not found_skip_tag:
-                        try:
-                            instance['VpcId']
-                        except KeyError:
-                            # not in vpc
+                        # not in vpc
+                        if not instance.get('VpcId'):
                             ec2_cls_running_instances[(
-                                instance_type, az)] = ec2_cls_running_instances.get(
+                                instance_type,
+                                az)] = ec2_cls_running_instances.get(
                                 (instance_type, az), 0) + 1
                             instance_ids[(instance_type, az)].append(
                                 instance['InstanceId'] if not instance_name
                                 else instance_name)
                         else:
                             # inside vpc
-                            ec2_vpc_running_instances[(
-                                instance_type, az)] = ec2_vpc_running_instances.get(
+                            ec2_vpc_running_instances[
+                                (instance_type,
+                                 az)] = ec2_vpc_running_instances.get(
                                 (instance_type, az), 0) + 1
                             instance_ids[(instance_type, az)].append(
                                 instance['InstanceId'] if not instance_name
@@ -105,12 +105,12 @@ def calculate_ec2_ris(account):
             az = 'All'
 
         instance_type = reserved_instance['InstanceType']
-        if 'VPC' in  reserved_instance['ProductDescription']:
+        # check if VPC/Classic reserved instance
+        if 'VPC' in reserved_instance.get('ProductDescription'):
             ec2_vpc_reserved_instances[(
                 instance_type, az)] = ec2_vpc_reserved_instances.get(
                 (instance_type, az), 0) + reserved_instance['InstanceCount']
         else:
-            #not vpc
             ec2_cls_reserved_instances[(
                 instance_type, az)] = ec2_cls_reserved_instances.get(
                 (instance_type, az), 0) + reserved_instance['InstanceCount']
@@ -118,14 +118,13 @@ def calculate_ec2_ris(account):
         reserve_expiry[(instance_type, az)].append(calc_expiry_time(
             expiry=reserved_instance['End']))
 
-    classic = report_diffs(
+    classic_results = report_diffs(
         ec2_cls_running_instances, ec2_cls_reserved_instances, 'EC2 Classic')
 
-    vpc = report_diffs(
-        ec2_vpc_running_instances, ec2_vpc_reserved_instances, 'EC2 VPC'
-    )
-    results = [classic, vpc]
-    return results
+    vpc_results = report_diffs(
+        ec2_vpc_running_instances, ec2_vpc_reserved_instances, 'EC2 VPC')
+
+    return [classic_results, vpc_results]
 
 
 def calculate_elc_ris(account):
@@ -187,8 +186,8 @@ def calculate_elc_ris(account):
                 reserve_expiry[(instance_type, engine)].append(
                     calc_expiry_time(expiry=expiry_time))
 
-    results = report_diffs(elc_running_instances, elc_reserved_instances,
-                           'ElastiCache')
+    results = report_diffs(
+        elc_running_instances, elc_reserved_instances, 'ElastiCache')
     return results
 
 
