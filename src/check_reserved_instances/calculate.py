@@ -22,6 +22,7 @@ def calc_expiry_time(expiry):
 
     Returns:
         The number of days between the expiration date and now.
+
     """
     return (expiry.replace(tzinfo=None) - datetime.datetime.utcnow()).days
 
@@ -35,6 +36,7 @@ def calculate_ec2_ris(account):
 
     Returns:
         Results of running the `report_diffs` function.
+
     """
     aws_access_key_id = account['aws_access_key_id']
     aws_secret_access_key = account['aws_secret_access_key']
@@ -136,6 +138,7 @@ def calculate_elc_ris(account):
 
     Returns:
         Results of running the `report_diffs` function.
+
     """
     aws_access_key_id = account['aws_access_key_id']
     aws_secret_access_key = account['aws_secret_access_key']
@@ -200,6 +203,7 @@ def calculate_rds_ris(account):
 
     Returns:
         Results of running the `report_diffs` function.
+
     """
     aws_access_key_id = account['aws_access_key_id']
     aws_secret_access_key = account['aws_secret_access_key']
@@ -271,6 +275,7 @@ def report_diffs(running_instances, reserved_instances, service):
     Returns:
         A dict of the unused reservations, unreserved instances and counts of
         each.
+
     """
     instance_diff = {}
     regional_benefit_ris = {}

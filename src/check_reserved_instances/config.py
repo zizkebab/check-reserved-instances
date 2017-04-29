@@ -21,6 +21,7 @@ class ConfigLine(object):
                 not.
             default (Optional): If the configuration is not required, the
                 default value.
+
         """
         self.name = name
         self.required = required
@@ -38,6 +39,7 @@ def parse_aws_config(section, config_parser):
     Returns:
         aws_config (dict): A dict of an AWS account configuration loaded from
             the config file.
+
     """
     allowed_aws_options = [
         ConfigLine('aws_access_key_id', True),
@@ -76,6 +78,7 @@ def parse_config(filename):
     Returns:
         config (dict): A dictionary containing the loaded configurations from
             file.
+
     """
     config_parser = ConfigParser()
     config = {}
@@ -110,6 +113,7 @@ def parse_email_config(config_parser):
 
     Returns:
         email_config (dict): A dict containing the email configuration.
+
     """
     email_config = {}
 
