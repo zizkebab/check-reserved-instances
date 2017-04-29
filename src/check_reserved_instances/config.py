@@ -12,7 +12,7 @@ AWS_SECTION_NAME = 'AWS '
 class ConfigLine(object):
     """Configuration line item class."""
 
-    def __init__(self, name, required=True, default=None):
+    def __init__(self, name, required=True, default=None, config_type=str):
         """Initialize a configuration line item.
 
         Args:
@@ -21,11 +21,14 @@ class ConfigLine(object):
                 not.
             default (Optional): If the configuration is not required, the
                 default value.
+            config_type (Optional): The type of value expected from the
+                configuration.
 
         """
         self.name = name
         self.required = required
         self.default = default
+        self.config_type = config_type
 
 
 def parse_aws_config(section, config_parser):
@@ -45,8 +48,8 @@ def parse_aws_config(section, config_parser):
         ConfigLine('aws_access_key_id', True),
         ConfigLine('aws_secret_access_key', True),
         ConfigLine('region', False, 'us-east-1'),
-        ConfigLine('rds', False, True),
-        ConfigLine('elasticache', False, True)
+        ConfigLine('rds', False, True, bool),
+        ConfigLine('elasticache', False, True, bool)
     ]
 
     aws_config = {
@@ -62,7 +65,12 @@ def parse_aws_config(section, config_parser):
             sys.exit(-1)
 
         if config_parser.has_option(section, option.name):
-            aws_config[option.name] = config_parser.get(section, option.name)
+            if option.config_type == bool:
+                aws_config[option.name] = config_parser.getboolean(
+                    section, option.name)
+            else:
+                aws_config[option.name] = config_parser.get(
+                    section, option.name)
         else:
             aws_config[option.name] = option.default
 
@@ -119,12 +127,12 @@ def parse_email_config(config_parser):
 
     allowed_email_options = [
         ConfigLine('smtp_host', True),
-        ConfigLine('smtp_port', False, 25),
+        ConfigLine('smtp_port', False, 25, int),
         ConfigLine('smtp_user', False, None),
         ConfigLine('smtp_password', False, None),
         ConfigLine('smtp_recipients', True),
         ConfigLine('smtp_sendas', False, 'root@localhost'),
-        ConfigLine('smtp_tls', False, False)
+        ConfigLine('smtp_tls', False, False, bool)
     ]
 
     for option in allowed_email_options:
@@ -135,8 +143,15 @@ def parse_email_config(config_parser):
             sys.exit(-1)
 
         if config_parser.has_option(EMAIL_SECTION_NAME, option.name):
-            email_config[option.name] = config_parser.get(
-                EMAIL_SECTION_NAME, option.name)
+            if option.config_type == bool:
+                email_config[option.name] = config_parser.getboolean(
+                    EMAIL_SECTION_NAME, option.name)
+            elif option.config_type == int:
+                email_config[option.name] = config_parser.getint(
+                    EMAIL_SECTION_NAME, option.name)
+            else:
+                email_config[option.name] = config_parser.get(
+                    EMAIL_SECTION_NAME, option.name)
         else:
             email_config[option.name] = option.default
 
