@@ -11,40 +11,34 @@ import jinja2
 
 import pkg_resources
 
-from check_reserved_instances.calculate import instance_ids, reserve_expiry
+from check_reserved_instances.aws import instance_ids, reserve_expiry
 
 TEMPLATE_DIR = pkg_resources.resource_filename(
     'check_reserved_instances', 'templates')
 
 text_template = """
-{% for account_name, account_results in results.items() %}
-
 ##########################################################
-#### {{ account_name.rjust(20) }} Reserved Instances Report  #####
+####            Reserved Instances Report            #####
 ##########################################################
-    {%- for result in account_results -%}
-      {%- for service, results_list in result.items() %}
--------
+{% for service in report %}
 Below is the report on {{ service }} reserved instances:
-        {%- if results_list[0] -%}
-          {%- for type, count in results_list[0].items() %}
+    {%- if report[service]['unused_reservations'] -%}
+      {%- for type, count in report[service]['unused_reservations'].items() %}
 UNUSED RESERVATION!\t({{ count }})\t{{ type[0] }}\t{{ type[1] }}{%- if reserve_expiry %}\tExpires in {{ reserve_expiry[type]|string }} days.{%- endif %}
-          {%- endfor %}
-        {%- else %}
-You have no unused {{ service }} reservations.
-        {%- endif %}
-        {%- if results_list[1] %}
-          {%- for type, count in results_list[1].items() %}
-NOT RESERVED!\t({{ count }})\t{{ type[0] }}\t{{ type[1] }}{% if instance_ids %}\t{{ ", ".join(instance_ids[type]) }}{% endif %}
-          {%- endfor %}
-        {%- else %}
-You have no unreserved {{ service }} instances.
-        {%- endif %}
-({{ results_list[2] }}) running on-demand {{ service }} instances
-({{ results_list[3] }}) {{ service }} reservations
       {%- endfor %}
-    {%- endfor %}
-{%- endfor %}
+    {%- else %}
+You have no unused {{ service }} reservations.
+    {%- endif %}
+    {%- if report[service]['unreserved_instances'] %}
+      {%- for type, count in report[service]['unreserved_instances'].items() %}
+NOT RESERVED!\t({{ count }})\t{{ type[0] }}\t{{ type[1] }}{% if instance_ids %}\t{{ ", ".join(instance_ids[type]) }}{% endif %}
+      {%- endfor %}
+    {%- else %}
+You have no unreserved {{ service }} instances.
+    {%- endif %}
+({{ report[service]['qty_running_instances'] }}) running on-demand {{ service }} instances
+({{ report[service]['qty_reserved_instances'] }}) {{ service }} reservations
+{% endfor %}
 """  # noqa
 
 
@@ -54,9 +48,10 @@ def report_results(config, results):
     Args:
         config (dict): The application configuration.
         results (dict): The results to report.
+
     """
     report_text = jinja2.Template(text_template).render(
-        results=results, instance_ids=instance_ids,
+        report=results, instance_ids=instance_ids,
         reserve_expiry=reserve_expiry)
 
     print(report_text)
@@ -66,7 +61,7 @@ def report_results(config, results):
             loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
             trim_blocks=True
         ).get_template('html_template.html').render(
-            results=results, instance_ids=instance_ids,
+            report=results, instance_ids=instance_ids,
             reserve_expiry=reserve_expiry)
 
         email_config = config['Email']

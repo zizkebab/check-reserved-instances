@@ -59,10 +59,12 @@ credentials that will be used to query for instances. Replace
 
 The following configuration options are supported:
 
--  **aws\_access\_key\_id** (Required str): The AWS IAM access key for a
+-  **aws\_access\_key\_id** (Optional str): The AWS IAM access key for a
    specific user.
--  **aws\_secret\_access\_key** (Required str): The AWS IAM secret key
+-  **aws\_secret\_access\_key** (Optional str): The AWS IAM secret key
    for a specific user.
+-  **aws\_role\_arn** (Optional str): The AWS IAM role to assume to authenticate
+   with if you wish to use IAM roles to authenticate across accounts. See `AWS Documentation`_ for more information.
 -  **region** (Optional str): The AWS region to query for the account.
    Defaults to us-east-1. If multiple regions are desired, another
    ``[AWS <name here>]`` section is required.
@@ -121,35 +123,27 @@ For one-time use, execute the script:
 ::
 
     $ check-reserved-instances --config config.ini
-    AWS account1 Reserved Instances Report
-    ###############################################
+    ##########################################################
+    ####            Reserved Instances Report            #####
+    ##########################################################
 
-    Below is the report on EC2 reserved instances:
-
+    Below is the report on EC2 VPC reserved instances:
     UNUSED RESERVATION! (1) c4.large    All     Expires in [42] days.
-
     UNUSED RESERVATION! (1) m1.small    us-east-1b    Expires in [201] days.
-
     UNUSED RESERVATION! (1) m2.2xlarge  us-east-1a    Expires in [60] days.
-
-
     NOT RESERVED!  (1) t1.micro    us-east-1c    i-sxcs34na
-
     NOT RESERVED!  (2) m1.small    us-east-1d    i-dfgeqa53, i-456sdf4g
-
     NOT RESERVED!  (3) m1.medium   us-east-1d    test_instance1, i-sdf3f4d6, test_instance2
-
     NOT RESERVED!  (1) m2.2xlarge  us-east-1b    i-21asdf4a
-
 
     (23) running on-demand EC2 instances
     (18) EC2 reservations
-    ###############################################
+
 
     Not sending email for this report
 
 In this example, you can easily see that an m2.2xlarge was spun up in
-the wrong AZ (us-east-1b vs. us-east-1a). A c4.large regional benefit reserved instance is also unutilized. The
+the wrong AZ (us-east-1b vs. us-east-1a). A c4.large regional benefit reserved instance is also unused. The
 “NOT RESERVED!” section shows that you could benefit from reserving:
 
 -  \(1) t1.micro
@@ -189,6 +183,7 @@ needed to run the reporter:
                 "Action": [
                     "ec2:DescribeInstances",
                     "ec2:DescribeReservedInstances",
+                    "ec2:DescribeAccountAttributes",
                     "rds:DescribeDBInstances",
                     "rds:DescribeReservedDBInstances",
                     "elasticache:DescribeCacheClusters",
@@ -199,19 +194,6 @@ needed to run the reporter:
         ]
     }
 
-
-TODO
-----
-
--  Overhaul format of report (one table with all accounts/services?)
--  In report, add
-
-   -  time since launch with each instance in the NOT RESERVED
-   -  cost-savings of each UNUSED RESERVATION instance type
-
--  Install templates to operating system folder (ex. /etc/check-reserved-instances) for easy editing
--  Support 'NoReservation' tag for ElastiCache/RDS instances
--  Add support for Redshift reserved nodes
 
 Contributing
 ------------
@@ -224,3 +206,4 @@ tox.ini).
 .. _epheph/ec2-check-reserved-instances: https://github.com/epheph/ec2-check-reserved-instances
 .. _pull request #5 by DavidGoodwin: https://github.com/epheph/ec2-check-reserved-instances/pull/5
 .. _Regional Benefit Reserved Instances: https://aws.amazon.com/blogs/aws/ec2-reserved-instance-update-convertible-ris-and-regional-benefit/
+.. _AWS Documentation: http://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html

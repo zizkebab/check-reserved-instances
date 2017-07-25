@@ -1,0 +1,4 @@
+[AWS account1]
+aws_role_arn = test
+rds = False
+elasticache = False

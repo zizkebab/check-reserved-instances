@@ -45,8 +45,9 @@ def parse_aws_config(section, config_parser):
 
     """
     allowed_aws_options = [
-        ConfigLine('aws_access_key_id', True),
-        ConfigLine('aws_secret_access_key', True),
+        ConfigLine('aws_access_key_id', False, None),
+        ConfigLine('aws_secret_access_key', False, None),
+        ConfigLine('aws_role_arn', False, None),
         ConfigLine('region', False, 'us-east-1'),
         ConfigLine('rds', False, True, bool),
         ConfigLine('elasticache', False, True, bool)
@@ -57,13 +58,6 @@ def parse_aws_config(section, config_parser):
     }
 
     for option in allowed_aws_options:
-        if option.required and not config_parser.has_option(
-                section, option.name):
-            print('Required configuration option for an AWS account ({}) '
-                  'in section "{}" is not configured!'.format(
-                      option.name, section))
-            sys.exit(-1)
-
         if config_parser.has_option(section, option.name):
             if option.config_type == bool:
                 aws_config[option.name] = config_parser.getboolean(

@@ -351,14 +351,32 @@ def get_rds_reserved_instances():
     }
 
 
-def test_bad_aws_config():
-    """Test loading a bad config file with missing AWS options."""
+@mock.patch('check_reserved_instances.aws.boto3.client')
+@mock.patch('check_reserved_instances.aws.boto3.Session')
+def test_aws_sts(mocked_session, mocked_client):
+    """Test using AssumeRole to authenticate to AWS."""
+    paginate = mocked_session.return_value.client.return_value.get_paginator
+    paginate.return_value.paginate.return_value = [get_ec2_instances()]
+
+    client = mocked_session.return_value.client
+    client.return_value.describe_reserved_instances.return_value = (
+        get_ec2_reserved_instances())
+
+    sts_client = mocked_client.return_value.client
+    sts_client.return_value.assume_role.return_value = {
+        'Credentials': {
+            'AccessKeyId': 'test',
+            'SecretAccessKey': 'test',
+            'SessionToken': 'test'
+        }
+    }
+
     runner = CliRunner()
     result = runner.invoke(
-        cli, ['--config', 'tests/fixtures/config.ini.bad_aws'])
+        cli, ['--config', 'tests/fixtures/config.ini.aws_sts'])
 
-    assert ('Required configuration option for an AWS account '
-            '(aws_secret_access_key)' in result.output)
+    assert 'Reserved Instances Report' in result.output
+    assert 'Not sending email for this report' in result.output
 
 
 def test_bad_email_config():
@@ -391,12 +409,14 @@ def test_not_aws_config():
             'file!' in result.output)
 
 
-@mock.patch('check_reserved_instances.calculate.boto3.client')
+@mock.patch('check_reserved_instances.aws.boto3.Session')
 def test_success_no_email(mocked_boto3):
     """Test a successful run without email."""
-    paginate = mocked_boto3.return_value.get_paginator.return_value.paginate
-    paginate.return_value = [get_ec2_instances()]
-    mocked_boto3.return_value.describe_reserved_instances.return_value = (
+    paginate = mocked_boto3.return_value.client.return_value.get_paginator
+    paginate.return_value.paginate.return_value = [get_ec2_instances()]
+
+    client = mocked_boto3.return_value.client
+    client.return_value.describe_reserved_instances.return_value = (
         get_ec2_reserved_instances())
 
     runner = CliRunner()
@@ -406,14 +426,15 @@ def test_success_no_email(mocked_boto3):
     assert 'Not sending email for this report' in result.output
 
 
-@mock.patch('check_reserved_instances.calculate.boto3.client')
+@mock.patch('check_reserved_instances.aws.boto3.Session')
 @mock.patch('check_reserved_instances.report.smtplib')
 def test_success_no_email_tls(mocked_smtplib, mocked_boto3):
     """Test a successful run with email but without TLS or SMTP auth."""
-    paginate = mocked_boto3.return_value.get_paginator.return_value.paginate
-    paginate.return_value = [get_ec2_instances()]
+    paginate = mocked_boto3.return_value.client.return_value.get_paginator
+    paginate.return_value.paginate.return_value = [get_ec2_instances()]
 
-    mocked_boto3.return_value.describe_reserved_instances.return_value = (
+    client = mocked_boto3.return_value.client
+    client.return_value.describe_reserved_instances.return_value = (
         get_ec2_reserved_instances())
 
     mocked_smtplib.return_value.sendmail.return_value = True
@@ -425,12 +446,12 @@ def test_success_no_email_tls(mocked_smtplib, mocked_boto3):
     assert 'Sending emails to test@example.com' in result.output
 
 
-@mock.patch('check_reserved_instances.calculate.boto3.client')
+@mock.patch('check_reserved_instances.aws.boto3.Session')
 @mock.patch('check_reserved_instances.report.smtplib')
 def test_success_run(mocked_smtplib, mocked_boto3):
     """Test a successful run for all services with email."""
-    paginate = mocked_boto3.return_value.get_paginator.return_value.paginate
-    paginate.side_effect = [
+    paginate = mocked_boto3.return_value.client.return_value.get_paginator
+    paginate.return_value.paginate.side_effect = [
         [get_ec2_instances()],
         [get_rds_instances()],
         [get_rds_reserved_instances()],
@@ -439,7 +460,8 @@ def test_success_run(mocked_smtplib, mocked_boto3):
         [get_ec2_instances()],
     ]
 
-    mocked_boto3.return_value.describe_reserved_instances.return_value = (
+    client = mocked_boto3.return_value.client
+    client.return_value.describe_reserved_instances.return_value = (
         get_ec2_reserved_instances())
 
     mocked_smtplib.return_value.starttls.return_value = True
@@ -451,6 +473,5 @@ def test_success_run(mocked_smtplib, mocked_boto3):
         cli, ['--config', 'tests/fixtures/config.ini.testing'],
         catch_exceptions=False)
 
-    assert 'AWS account1 Reserved Instances Report' in result.output
-    assert 'AWS account2 Reserved Instances Report' in result.output
+    assert 'Reserved Instances Report' in result.output
     assert 'Sending emails to test@example.com' in result.output

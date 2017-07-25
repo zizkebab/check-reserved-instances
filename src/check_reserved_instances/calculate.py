@@ -1,16 +1,6 @@
-"""Calculate the RI's for each AWS service."""
+"""Results calculation functions."""
 
-from collections import defaultdict
 import datetime
-
-import boto3
-
-
-# instance IDs/name to report with unreserved instances
-instance_ids = defaultdict(list)
-
-# reserve expiration time to report with unused reservations
-reserve_expiry = defaultdict(list)
 
 
 def calc_expiry_time(expiry):
@@ -27,237 +17,7 @@ def calc_expiry_time(expiry):
     return (expiry.replace(tzinfo=None) - datetime.datetime.utcnow()).days
 
 
-def calculate_ec2_ris(account):
-    """Calculate the running/reserved instances in EC2.
-
-    Args:
-        account (dict): The AWS Account to scan as loaded from the
-            configuration file.
-
-    Returns:
-        Results of running the `report_diffs` function.
-
-    """
-    aws_access_key_id = account['aws_access_key_id']
-    aws_secret_access_key = account['aws_secret_access_key']
-    region = account['region']
-
-    ec2_conn = boto3.client(
-        'ec2', aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key, region_name=region)
-    paginator = ec2_conn.get_paginator('describe_instances')
-    page_iterator = paginator.paginate(
-        Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
-
-    # Loop through running EC2 instances and record their AZ, type, and
-    # Instance ID or Name Tag if it exists.
-    ec2_cls_running_instances = {}
-    ec2_vpc_running_instances = {}
-    for page in page_iterator:
-        for reservation in page['Reservations']:
-            for instance in reservation['Instances']:
-                # Ignore spot instances
-                if 'SpotInstanceRequestId' not in instance:
-                    az = instance['Placement']['AvailabilityZone']
-                    instance_type = instance['InstanceType']
-                    # Check for 'skip reservation' tag and name tag
-                    found_skip_tag = False
-                    instance_name = None
-                    if 'Tags' in instance:
-                        for tag in instance['Tags']:
-                            if tag['Key'] == 'NoReservation' and len(
-                                tag['Value']) > 0 and tag[
-                                    'Value'].lower() == 'true':
-                                found_skip_tag = True
-                            if tag['Key'] == 'Name' and len(tag['Value']) > 0:
-                                instance_name = tag['Value']
-
-                    # If skip tag is not found, increment running instances
-                    # count and add instance name/ID
-                    if not found_skip_tag:
-                        # not in vpc
-                        if not instance.get('VpcId'):
-                            ec2_cls_running_instances[(
-                                instance_type,
-                                az)] = ec2_cls_running_instances.get(
-                                (instance_type, az), 0) + 1
-                            instance_ids[(instance_type, az)].append(
-                                instance['InstanceId'] if not instance_name
-                                else instance_name)
-                        else:
-                            # inside vpc
-                            ec2_vpc_running_instances[
-                                (instance_type,
-                                 az)] = ec2_vpc_running_instances.get(
-                                (instance_type, az), 0) + 1
-                            instance_ids[(instance_type, az)].append(
-                                instance['InstanceId'] if not instance_name
-                                else instance_name)
-
-    # Loop through active EC2 RIs and record their AZ and type.
-    ec2_cls_reserved_instances = {}
-    ec2_vpc_reserved_instances = {}
-    for reserved_instance in ec2_conn.describe_reserved_instances(
-            Filters=[{'Name': 'state', 'Values': ['active']}])[
-            'ReservedInstances']:
-        # Detect if an EC2 RI is a regional benefit RI or not
-        if reserved_instance['Scope'] == 'Availability Zone':
-            az = reserved_instance['AvailabilityZone']
-        else:
-            az = 'All'
-
-        instance_type = reserved_instance['InstanceType']
-        # check if VPC/Classic reserved instance
-        if 'VPC' in reserved_instance.get('ProductDescription'):
-            ec2_vpc_reserved_instances[(
-                instance_type, az)] = ec2_vpc_reserved_instances.get(
-                (instance_type, az), 0) + reserved_instance['InstanceCount']
-        else:
-            ec2_cls_reserved_instances[(
-                instance_type, az)] = ec2_cls_reserved_instances.get(
-                (instance_type, az), 0) + reserved_instance['InstanceCount']
-
-        reserve_expiry[(instance_type, az)].append(calc_expiry_time(
-            expiry=reserved_instance['End']))
-
-    classic_results = report_diffs(
-        ec2_cls_running_instances, ec2_cls_reserved_instances, 'EC2 Classic')
-
-    vpc_results = report_diffs(
-        ec2_vpc_running_instances, ec2_vpc_reserved_instances, 'EC2 VPC')
-
-    return [classic_results, vpc_results]
-
-
-def calculate_elc_ris(account):
-    """Calculate the running/reserved instances in ElastiCache.
-
-    Args:
-        account (dict): The AWS Account to scan as loaded from the
-            configuration file.
-
-    Returns:
-        Results of running the `report_diffs` function.
-
-    """
-    aws_access_key_id = account['aws_access_key_id']
-    aws_secret_access_key = account['aws_secret_access_key']
-    region = account['region']
-
-    elc_conn = boto3.client(
-        'elasticache', aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key, region_name=region)
-
-    paginator = elc_conn.get_paginator('describe_cache_clusters')
-    page_iterator = paginator.paginate()
-    # Loop through running ElastiCache instance and record their engine,
-    # type, and name.
-    elc_running_instances = {}
-    for page in page_iterator:
-        for instance in page['CacheClusters']:
-            if instance['CacheClusterStatus'] == 'available':
-                engine = instance['Engine']
-                instance_type = instance['CacheNodeType']
-
-                elc_running_instances[(
-                    instance_type, engine)] = elc_running_instances.get(
-                        (instance_type, engine), 0) + 1
-                instance_ids[(instance_type, engine)].append(
-                    instance['CacheClusterId'])
-
-    paginator = elc_conn.get_paginator('describe_reserved_cache_nodes')
-    page_iterator = paginator.paginate()
-    # Loop through active ElastiCache RIs and record their type and engine.
-    elc_reserved_instances = {}
-    for page in page_iterator:
-        for reserved_instance in page['ReservedCacheNodes']:
-            if reserved_instance['State'] == 'active':
-                engine = reserved_instance['ProductDescription']
-                instance_type = reserved_instance['CacheNodeType']
-
-                elc_reserved_instances[(instance_type, engine)] = (
-                    elc_reserved_instances.get((
-                        instance_type, engine), 0) + reserved_instance[
-                        'CacheNodeCount'])
-
-                # No end datetime is returned, so calculate from 'StartTime'
-                # (a `DateTime`) and 'Duration' in seconds (integer)
-                expiry_time = reserved_instance[
-                    'StartTime'] + datetime.timedelta(
-                        seconds=reserved_instance['Duration'])
-
-                reserve_expiry[(instance_type, engine)].append(
-                    calc_expiry_time(expiry=expiry_time))
-
-    results = report_diffs(
-        elc_running_instances, elc_reserved_instances, 'ElastiCache')
-    return results
-
-
-def calculate_rds_ris(account):
-    """Calculate the running/reserved instances in RDS.
-
-    Args:
-        account (dict): The AWS Account to scan as loaded from the
-            configuration file.
-
-    Returns:
-        Results of running the `report_diffs` function.
-
-    """
-    aws_access_key_id = account['aws_access_key_id']
-    aws_secret_access_key = account['aws_secret_access_key']
-    region = account['region']
-
-    rds_conn = boto3.client(
-        'rds', region_name=region, aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key)
-
-    paginator = rds_conn.get_paginator('describe_db_instances')
-    page_iterator = paginator.paginate()
-
-    # Loop through running RDS instances and record their Multi-AZ setting,
-    # type, and Name
-    rds_running_instances = {}
-    for page in page_iterator:
-        for instance in page['DBInstances']:
-            az = instance['MultiAZ']
-            instance_type = instance['DBInstanceClass']
-            rds_running_instances[(
-                instance_type, az)] = rds_running_instances.get(
-                    (instance_type, az), 0) + 1
-            instance_ids[(instance_type, az)].append(
-                instance['DBInstanceIdentifier'])
-
-    paginator = rds_conn.get_paginator('describe_reserved_db_instances')
-    page_iterator = paginator.paginate()
-    # Loop through active RDS RIs and record their type and Multi-AZ setting.
-    rds_reserved_instances = {}
-    for page in page_iterator:
-        for reserved_instance in page['ReservedDBInstances']:
-            if reserved_instance['State'] == 'active':
-                az = reserved_instance['MultiAZ']
-                instance_type = reserved_instance['DBInstanceClass']
-                rds_reserved_instances[(
-                    instance_type, az)] = rds_reserved_instances.get(
-                    (instance_type, az), 0) + reserved_instance[
-                    'DBInstanceCount']
-
-                # No end datetime is returned, so calculate from 'StartTime'
-                # (a `DateTime`) and 'Duration' in seconds (integer)
-                expiry_time = reserved_instance[
-                    'StartTime'] + datetime.timedelta(
-                        seconds=reserved_instance['Duration'])
-
-                reserve_expiry[(instance_type, az)].append(calc_expiry_time(
-                    expiry=expiry_time))
-
-    results = report_diffs(
-        rds_running_instances, rds_reserved_instances, 'RDS')
-    return results
-
-
-def report_diffs(running_instances, reserved_instances, service):
+def report_diffs(running_instances, reserved_instances):
     """Calculate differences between reserved instances and running instances.
 
     Prints a message string containg unused reservations, unreserved instances,
@@ -269,8 +29,6 @@ def report_diffs(running_instances, reserved_instances, service):
             zone). Value is the count of instances with those properties.
         reserved_instances (dict): Dictionary of reserved instances in the same
             format as running_instances.
-        service (str): The AWS service of reservation to report, such as EC2,
-            RDS, etc. Used only for outputting in the report.
 
     Returns:
         A dict of the unused reservations, unreserved instances and counts of
@@ -283,7 +41,7 @@ def report_diffs(running_instances, reserved_instances, service):
     for placement_key in reserved_instances:
         # if the AZ from an RI is 'All' (regional benefit RI)
         if placement_key[1] == 'All':
-            # put into another dict for these RIs and break
+            # put into another dict for these RIs for processing later
             regional_benefit_ris[placement_key[0]] = reserved_instances[
                 placement_key]
         else:
@@ -329,8 +87,8 @@ def report_diffs(running_instances, reserved_instances, service):
         qty_reserved_instances += instance_count
 
     return {
-        service: (
-            unused_reservations, unreserved_instances,
-            qty_running_instances, qty_reserved_instances
-        )
+        'unused_reservations': unused_reservations,
+        'unreserved_instances': unreserved_instances,
+        'qty_running_instances': qty_running_instances,
+        'qty_reserved_instances': qty_reserved_instances
     }
