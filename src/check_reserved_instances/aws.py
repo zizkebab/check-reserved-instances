@@ -6,14 +6,13 @@ import datetime
 import boto3
 
 from check_reserved_instances.calculate import calc_expiry_time
-
+from check_reserved_instances.normalized_units import normalized_units_per_hour
 
 # instance IDs/name to report with unreserved instances
 instance_ids = defaultdict(list)
 
 # reserve expiration time to report with unused reservations
 reserve_expiry = defaultdict(list)
-
 
 def create_boto_session(account):
     """Set up the boto3 session to connect to AWS.
@@ -132,12 +131,15 @@ def calculate_ec2_ris(session, results):
             Filters=[{'Name': 'state', 'Values': ['active']}])[
             'ReservedInstances']:
         # Detect if an EC2 RI is a regional benefit RI or not
+
         if reserved_instance['Scope'] == 'Availability Zone':
             az = reserved_instance['AvailabilityZone']
         else:
             az = 'All'
 
         instance_type = reserved_instance['InstanceType']
+        instance_family, instance_size = instance_type.split('.')
+
         # check if VPC/Classic reserved instance
         if account_is_vpc_only or 'VPC' in reserved_instance.get(
                 'ProductDescription'):
@@ -145,6 +147,12 @@ def calculate_ec2_ris(session, results):
                 instance_type, az)] = results[
                 'ec2_vpc_reserved_instances'].get(
                 (instance_type, az), 0) + reserved_instance['InstanceCount']
+            if az == 'All':
+                results['ec2_normalized_units_per_hour'][
+                    instance_family] = results[
+                    'ec2_normalized_units_per_hour'].get(
+                    instance_family, 0) + normalized_units_per_hour[instance_size] * reserved_instance['InstanceCount']
+
         else:
             results['ec2_classic_reserved_instances'][(
                 instance_type, az)] = results[

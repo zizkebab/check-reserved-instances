@@ -7,6 +7,7 @@ from check_reserved_instances.aws import (
     calculate_ec2_ris, calculate_elc_ris, calculate_rds_ris,
     create_boto_session)
 from check_reserved_instances.calculate import report_diffs
+from check_reserved_instances.calculate import report_normlaized_unit_diffs
 from check_reserved_instances.config import parse_config
 from check_reserved_instances.report import report_results
 
@@ -62,6 +63,7 @@ def cli(config):
         'ec2_classic_reserved_instances': {},
         'ec2_vpc_running_instances': {},
         'ec2_vpc_reserved_instances': {},
+        'ec2_normalized_units_per_hour': {},
         'elc_running_instances': {},
         'elc_reserved_instances': {},
         'rds_running_instances': {},
@@ -85,6 +87,10 @@ def cli(config):
     report['EC2 VPC'] = report_diffs(
         results['ec2_vpc_running_instances'],
         results['ec2_vpc_reserved_instances'])
+    report['EC2 Normalized'] = report_normlaized_unit_diffs(
+        results['ec2_vpc_running_instances'],
+        results['ec2_vpc_reserved_instances'],
+        results['ec2_normalized_units_per_hour'])
     report['ElastiCache'] = report_diffs(
         results['elc_running_instances'],
         results['elc_reserved_instances'])
@@ -92,3 +98,7 @@ def cli(config):
         results['rds_running_instances'],
         results['rds_reserved_instances'])
     report_results(current_config, report)
+
+
+if __name__ == '__main__':
+    cli()
